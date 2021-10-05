@@ -30,6 +30,9 @@ Ter instalado:
 - NPM 
 - MySql
 
+### Configurar dados do banco 
+Arquivo para configurar dados do banco: scr/database.js
+
 
 ### Para executar
 - Crie o banco de dados 'blog'
