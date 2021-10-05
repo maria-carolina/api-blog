@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const authConfig = require('../config/auth.json');
-const { body, validationResult } = require('express-validator');
 
 //models
 const User = require('../models/User');
@@ -20,19 +19,12 @@ module.exports = {
         try {
             const { displayName, email, password, image } = req.body
 
-            let min = 100,
-                max = 9999,
-                hashPassword = await bcrypt.hash(password, 10),
-                genId = Math.random() * (max - min) + min;
-
             const user = await User.create({
-                id: genId,
                 displayName,
                 email,
-                password: hashPassword,
+                password,
                 image
             });
-
 
             return res.status(201).send({
                 token: generateToken({ id: user.id })
@@ -40,11 +32,20 @@ module.exports = {
 
         } catch (err) {
             const errObj = {};
-            err.errors.map(er => {
-                errObj['message'] = er.message;
-            });
+            let status = 404;
 
-            return res.status(400).send(errObj)
+            //colocando for para retornar 1 erro por vez, para controle do codigo do status
+            for (var i = 0; i < 1; i++) {
+                err.errors.map(er => {
+                    errObj['message'] = er.message;
+                    //alterar status code quando for erro em campo unique
+                    if(er.validatorKey == 'isUnique'){
+                        status = 409;
+                    }
+                });
+             }
+             
+            return res.status(status).send(errObj)
         }
 
     },
@@ -57,13 +58,13 @@ module.exports = {
                 return res.status(400).send({ message: 'email is required' })
 
             if (email == '')
-                return res.status(400).send({ message: 'email is vazio' })
+                return res.status(400).send({ message: 'email is not allowed to be empty' })
 
             if (password == undefined)
                 return res.status(400).send({ message: 'password is required' })
 
             if (password == '')
-                return res.status(400).send({ message: 'password is vazio' })
+                return res.status(400).send({ message: 'password is not allowed to be empty' })
 
             const user = await User.findOne({
                 where: { email }
@@ -112,7 +113,7 @@ module.exports = {
             });
 
             if (!user)
-                return res.status(400).send({ error: 'Usuário não existe' })
+                return res.status(404).send({ error: 'Usuário não existe' })
 
             return res.status(200).send(user);
 

@@ -7,12 +7,7 @@ module.exports = {
         try {
             const { title, content } = req.body;
 
-            let min = 100,
-                max = 9999,
-                genId = Math.random() * (max - min) + min;
-
             const post = await Post.create({
-                id: genId,
                 title,
                 content,
                 userId: req.userId
@@ -21,12 +16,15 @@ module.exports = {
             return res.status(201).send(post);
 
         } catch (err) {
+            if (err == null)
+                return res.status(400).send({error: 'Erro ao salvar post'})
+
             const errObj = {};
             err.errors.map(er => {
                 errObj['message'] = er.message;
-            })
+            });
 
-            return res.status(400).send(err)
+            return res.status(400).send(errObj)
         }
     },
 
@@ -39,7 +37,7 @@ module.exports = {
             });
             return res.status(200).send(posts);
         } catch (err) {
-            return res.send({ error: 'Erro ao alterar postagem' });
+            return res.send({ error: 'Erro ao exibir postages' });
         }
     },
 
@@ -51,11 +49,11 @@ module.exports = {
             });
 
             if (!post) {
-                return res.status(400).send({ message: 'Not Found' });
+                return res.status(404).send({ message: 'Not Found' });
             }
             return res.status(200).send(post);
         } catch (err) {
-            return res.send({ error: 'Erro' });
+            return res.send({ error: 'Erro ao exibir post' });
         }
     },
 
@@ -70,10 +68,10 @@ module.exports = {
             });
 
             if (!post)
-                return res.status(400).send({ message: 'post não encontrado' });
+                return res.status(404).send({ message: 'Post não encontrado' });
 
             if (post.userId !== req.userId)
-                return res.status(400).send({ message: 'Nã autorizado' });
+                return res.status(401).send({ message: 'Usuário não autorizado' });
 
             await Post.update({
                 title, content
@@ -82,8 +80,6 @@ module.exports = {
             });
 
             post = await Post.findOne({
-                attributes: ['title', 'content', 'userId']
-            }, {
                 where: { id }
             });
 
@@ -129,7 +125,7 @@ module.exports = {
             });
 
             if (!post)
-                return res.status(400).send({ message: 'post não encontrado' });
+                return res.status(404).send({ message: 'post não encontrado' });
 
             if (post.userId !== req.userId)
                 return res.status(401).send({ message: 'Não autorizado' });

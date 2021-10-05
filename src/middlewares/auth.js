@@ -5,15 +5,14 @@ module.exports = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if(!authHeader){
-        return res.status(401).send({ error: 'Usuário não logado no sistema'})
+        return res.status(401).send({ message: 'Token não encontrado'})
     }
 
     const parts = authHeader.split(' ');
 
     jwt.verify(authHeader, authConfig.secret, (err, decoded) => {
         if (err) {
-            console.log(12)
-            return res.status(401).send({ error: 'Token inválido'})
+            return res.status(401).send({ message: 'Token expirado ou inválido'})
         } 
 
         req.userId = decoded.id; //variavel global 
